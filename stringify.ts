@@ -11,7 +11,8 @@ export function stringify(
   option?: {
     space?: string|number,
     maxLength?: number,
-    indentLimit?: number
+    indentLimit?: number,
+    strict?: true,
 }) {
   const indent = (option?.space)
       ? (typeof option.space == "string") ? option.space : [...Array(option.space)].map(_x => " ").join("")
@@ -19,6 +20,7 @@ export function stringify(
 
   const maxlength = option?.maxLength ? option.maxLength : 100
   const indentLimit = option?.indentLimit ? option.indentLimit : Infinity
+  const strict = option?.strict ? option.strict : false
 
   function _stringify(
     obj: Record<string, any>,
@@ -31,14 +33,14 @@ export function stringify(
     const prettified = string.replace(stringOrChar, str_replcer)  // JSON.stringify() & replace
     const lengthLimit = maxlength - currentIndent.length - reserved // 上限までの残りの文字数
 
-    if (string === undefined) {                       // 不適切な入力の場合
-      return string                                   // undefined
+    if (string === undefined) {                           // 不適切な入力の場合
+      return string                                       // undefined
     }
-    else if (indentCount >= indentLimit){             // インデント上限に達している場合
-      return prettified                               // JSON.stringify() & replace
+    else if (!strict && indentCount >= indentLimit){      // インデント上限に達している場合
+      return prettified                                   // JSON.stringify() & replace
     }
-    else if (prettified.length <= lengthLimit) {      // 文字数が上限以下の場合
-      return prettified                               // JSON.stringify() & replace
+    else if (prettified.length <= lengthLimit) {          // 文字数が上限以下の場合
+      return prettified                                   // JSON.stringify() & replace
     } // なので、インデントなしの結果が文字数上限を越えないなら space の設定は無視される
 
 
@@ -74,12 +76,36 @@ export function stringify(
       }
 
       if (items.length > 0) {
-        const indented_items = indent + items.join(`,\n${nextIndent}`)
-        return [start, indented_items, end].join(`\n${currentIndent}`)
+        if (strict && indentCount >= indentLimit){
+          const flexed_items = flex(items, lengthLimit, indentCount > indentLimit).join(`\n${currentIndent}`)
+          return start + flexed_items + end
+        } else {
+          const indented_items = indent + items.join(`,\n${nextIndent}`)
+          return [start, indented_items, end].join(`\n${currentIndent}`)
+        }
       }
     }
 
     return string
   }
   return _stringify(input, "", 0, 0)
+}
+
+
+export function flex(
+  items: Array<string>,
+  lengthLimit: number,
+  is_nested: boolean
+): Array<string> {
+  const densed: Array<string> = []
+  const last = items.reduce( (pre, item) => {
+    const added = pre + item + ", "
+    if (added.length <= lengthLimit -1){
+      return added
+    } else {
+      densed.push(pre)
+      return is_nested ? item + ", " : " " + item + ", "
+    }
+  } , "")
+  return [...densed, (last.endsWith(", ")) ? last.slice(0,-2) : last]
 }
