@@ -1,72 +1,85 @@
-// based_on https://github.com/lydell/json-stringify-pretty-compact
+const stringOrChar = /("(?:[^\\"]|\\.)*")|[:,]/g // 文字列 or 区切り文字にマッチする
 
-export function stringify(input: any, space?:string|number, maxLength?: number) {
-  const stringOrChar = /("(?:[^\\"]|\\.)*")|[:,]/g
+const str_replcer: Parameters<typeof String.prototype.replace>[1] = (match, captured) => {
+  // 文字列はそのままで、区切り文字 : と , には後ろに半角空白を加える
+  return captured || `${match} `
+}
 
-  const indent = (space)
-      ? (typeof space == "string") ? space : [...Array(space)].map(_x => " ").join("")
+
+export function stringify(
+  input: any,
+  option?: {
+    space?: string|number,
+    maxLength?: number,
+    indentLimit?: number
+}) {
+  const indent = (option?.space)
+      ? (typeof option.space == "string") ? option.space : [...Array(option.space)].map(_x => " ").join("")
       : "  "
 
-  const maxlength = (maxLength) ? maxLength : 100
+  const maxlength = option?.maxLength ? option.maxLength : 100
+  const indentLimit = option?.indentLimit ? option.indentLimit : Infinity
 
   function _stringify(
     obj: Record<string, any>,
     currentIndent:string,
-    reserved: number
+    reserved: number,
+    indentCount: number,
   ) {
+    // 再帰なし
     const string = JSON.stringify(obj)
-    if (string === undefined) { return string }
-    const length = maxlength - currentIndent.length - reserved
+    const prettified = string.replace(stringOrChar, str_replcer)  // JSON.stringify() & replace
+    const lengthLimit = maxlength - currentIndent.length - reserved // 上限までの残りの文字数
 
-      // indent = 0 での結果が limit 以下なら indent は考慮しない
-      if (string.length <= length) {
-        const prettified = string.replace(
-          stringOrChar,
-          (match, stringLiteral) => { return stringLiteral || `${match} ` }
-        )
-        if (prettified.length <= length) {
-          return prettified
-        }
-      }
+    if (string === undefined) {                       // 不適切な入力の場合
+      return string                                   // undefined
+    }
+    else if (indentCount >= indentLimit){             // インデント上限に達している場合
+      return prettified                               // JSON.stringify() & replace
+    }
+    else if (prettified.length <= lengthLimit) {      // 文字数が上限以下の場合
+      return prettified                               // JSON.stringify() & replace
+    } // なので、インデントなしの結果が文字数上限を越えないなら space の設定は無視される
 
-      if (typeof obj === "object" && obj !== null) {
-        const nextIndent = currentIndent + indent
-        const items:Array<string> = []
-        let start
-        let end
 
-        if (Array.isArray(obj)) {
-          start = "["
-          end = "]"
-          const max = obj.length
-          obj.forEach((_x,index) => {
-            items.push(
-              _stringify(obj[index], nextIndent, index === max - 1 ? 0 : 1) ||
-                "null"
-            )
-          })
-        } else {
-          start = "{"
-          end = "}"
-          const max = Object.keys(obj).length
-          Object.entries(obj).forEach(([key,val], index) => {
-            const keyPart = `${JSON.stringify(key)}: `
-            const newReseve = keyPart.length + (index === max - 1 ? 0 : 1)
-            const value = _stringify(val, nextIndent, newReseve)
-            if (value !== undefined) {
-              items.push(keyPart + value)
-            }
-          })
-        }
+    // 再帰あり
+    if (typeof obj === "object" && obj !== null) {
+      const nextIndent = currentIndent + indent
+      const items:Array<string> = []
+      let start
+      let end
 
-        if (items.length > 0) {
-          return [start, indent + items.join(`,\n${nextIndent}`), end].join(
-            `\n${currentIndent}`
+      if (Array.isArray(obj)) {
+        start = "["
+        end = "]"
+        const last_idx = obj.length - 1
+        obj.forEach((_x,index) => {
+          items.push(
+            _stringify(obj[index], nextIndent, index === last_idx ? 0 : 1, indentCount+1) ||
+            "null"
           )
-        }
+        })
+      } else {
+        start = "{"
+        end = "}"
+        const last_idx = Object.keys(obj).length - 1
+        Object.entries(obj).forEach(([key,val], index) => {
+          const keyPart = `${JSON.stringify(key)}: `
+          const newReseve = keyPart.length + (index === last_idx ? 0 : 1)
+          const value = _stringify(val, nextIndent, newReseve, indentCount+1)
+          if (value !== undefined) {
+            items.push(keyPart + value)
+          }
+        })
       }
 
-      return string
+      if (items.length > 0) {
+        const indented_items = indent + items.join(`,\n${nextIndent}`)
+        return [start, indented_items, end].join(`\n${currentIndent}`)
+      }
+    }
+
+    return string
   }
-  return _stringify(input, "", 0)
+  return _stringify(input, "", 0, 0)
 }
