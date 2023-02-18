@@ -4,7 +4,7 @@ forked from [lydell / json-stringify-pretty-compact](https://github.com/lydell/j
 
 `JSON.stringify()` による過度なインデントの挿入を修正する。
 ```json
-stringify(obj, {maxLength:60, packAt: -1)
+"stringify(obj, {maxLength:60, packAt: -1)"
 
 {
   "bool": true,
@@ -57,7 +57,7 @@ console.log(someObject)
     {"x": 2, "y": 2}
   ]
 }
-             ↓
+             "↓"
 {
   "bool": true,
   "short array": [1, 2, 3],
@@ -93,7 +93,7 @@ console.log(someObject)
 ----
 
 ```JSON
-stringify(obj, {maxLength:60, maxIndent: 2})
+"stringify(obj, {maxLength:60, maxIndent: 2})"
 
 {
   "bool": true,
@@ -107,7 +107,7 @@ stringify(obj, {maxLength:60, maxIndent: 2})
 }
 ```
 ```JSON
-stringify(obj, {maxLength:60, maxIndent: 2, packType: "strict"})
+"stringify(obj, {maxLength:60, maxIndent: 2, packType: 'strict'})"
 
 {
   "bool": true,
@@ -122,7 +122,7 @@ stringify(obj, {maxLength:60, maxIndent: 2, packType: "strict"})
 }
 ```
 ```JSON
-stringify(obj, {maxLength:60, maxIndent: 2, packType: "not_strict"})
+"stringify(obj, {maxLength:60, maxIndent: 2, packType: 'not_strict'})"
 
 {
   "bool": true,
@@ -139,7 +139,7 @@ stringify(obj, {maxLength:60, maxIndent: 2, packType: "not_strict"})
 }
 ```
 ```JSON
-stringify(obj, {maxLength:60, packAt: -1})
+"stringify(obj, {maxLength:60, packAt: -1})"
 
 {
   "bool": true,
@@ -156,7 +156,7 @@ stringify(obj, {maxLength:60, packAt: -1})
 }
 ```
 ```JSON
-stringify(obj, {maxLength:60, packAt: -1, packType: "strict"})
+"stringify(obj, {maxLength:60, packAt: -1, packType: 'strict'})"
 
 {
   "bool": true,
@@ -171,7 +171,7 @@ stringify(obj, {maxLength:60, packAt: -1, packType: "strict"})
 }
 ```
 ```JSON
-stringify(obj, {maxLength:60, packAt: -2})
+"stringify(obj, {maxLength:60, packAt: -2})"
 {
   "bool": true,
   "short array": [1, 2, 3],
@@ -186,7 +186,7 @@ stringify(obj, {maxLength:60, packAt: -2})
 }
 ```
 ```JSON
-stringify(obj, {packAt: -2, packType: "strict"})
+"stringify(obj, {packAt: -2, packType: 'strict'})"
 
 {
   "bool": true,
@@ -198,7 +198,7 @@ stringify(obj, {packAt: -2, packType: "strict"})
 }
 ```
 ```JSON
-stringify(obj, {packAt: -2, packType: "inner_strict"})
+"stringify(obj, {packAt: -2, packType: 'inner_strict'})"
 
 {
   "bool": true,
