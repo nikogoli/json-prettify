@@ -212,4 +212,16 @@ Deno.test("packing", async t => {
   await t.step("maxIndent -2、packType: inner_strict", () => {
     assertEquals(stringify(base_obj, {maxLength:_max, maxIndent:-2, packType: "inner_strict"}), indent1_inner_strict)
   })
+
+  await t.step("maxIndent 設定無し (→ -1)、packType: not_strict", () => {
+    assertEquals(stringify(base_obj, {maxLength:_max, packType:"not_strict"}), indent2_not_strict)
+  })
+
+  await t.step("maxIndent 設定無し (→ -1)、packType: strict", () => {
+    assertEquals(stringify(base_obj, {maxLength:_max, packType:"strict"}), indent2_strict)
+  })
+
+  await t.step("maxIndent 設定無し (→ -1)、packType: inner_strict", () => {
+    assertEquals(stringify(base_obj, {maxLength:_max, packType:"inner_strict"}), indent2_not_strict)
+  })
 })

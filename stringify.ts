@@ -108,20 +108,23 @@ export function stringify(
   const applied = _stringify(input, "", 0, 0)
   if (applied === undefined){ return applied }
 
+  const not_pack = applied(Infinity)
   if (option?.maxIndent === undefined){
-    return applied(Infinity)
+    if (packType === false){
+      return not_pack
+    } else {
+      const max_depth = Math.floor(get_max_indent(not_pack).length/indent.length)
+      const packing_depth = max_depth -1
+      return applied(packing_depth)
+    }
   }
-  else if (option?.maxIndent >= 0){
+  else if (option.maxIndent >= 0){
     return applied(option.maxIndent)
   }
-  else if (option?.maxIndent < 0){
-    const not_pack = applied(Infinity)
+  else {
     const max_depth = Math.floor(get_max_indent(not_pack).length/indent.length)
     const packing_depth = max_depth + option.maxIndent
     return applied(packing_depth)
-  }
-  else {
-    return applied(Infinity)
   }
 }
 

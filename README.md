@@ -4,8 +4,19 @@ forked from [lydell / json-stringify-pretty-compact](https://github.com/lydell/j
 
 `JSON.stringify()` による過度なインデントの挿入を修正する。
 ```json
-"stringify(obj, {maxLength:60, packAt: -1)"
+"stringify(obj, { maxLength:60 })"
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {"x": 2, "y": 1},
+    {"x": 1, "y": 1},
+    {"x": 2, "y": 2}
+  ]
+}
 
+"stringify(obj, { maxLength:60, packType:'inner_strict' })"
 {
   "bool": true,
   "short array": [1, 2, 3],
@@ -51,17 +62,6 @@ console.log(someObject)
   "short": [1, 2, 3],
   "long": [
     {"x": 1, "y": 2},
-    {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000, "c": 1000, "d": 1000},
-    {"x": 1, "y": 1},
-    {"x": 2, "y": 2}
-  ]
-}
-             "↓"
-{
-  "bool": true,
-  "short": [1, 2, 3],
-  "long": [
-    {"x": 1, "y": 2},
     {
       "x": 2,
       "y": 1,
@@ -76,15 +76,16 @@ console.log(someObject)
   ]
 }
 ```
-`maxIndent` と `withPack` の設定によってこの挙動を調整し、文字数上限 (maxLength) まで1行に要素を並べることができる。
+`maxIndent` と `packType` の設定によってこの挙動を調整し、文字数上限 (maxLength) まで1行に要素を並べることができる。
 
 - **maxIndent**：指定した数およびそれより深い階層において、オブジェクトや配列の展開形式を変更する。マイナスの数を渡すと最も深い階層から逆算する。
 - **packType**：変更後のオブジェクトや配列の展開形式。デフォルト `false`
   - `false`：常に1行に展開し、文字数上限は無視する。
   - `strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行しない。
   - `not_strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行してインデントを挿入する。
-  - `inner_strict`：文字数上限を基準に複数行に展開する。指定した階層では`not_strict`、それより深い階層では`strict`を適用する。<br><br>
+  - `inner_strict`：文字数上限を基準に複数行に展開する。最初の階層では`{ }`や`[ ]` の前後で改行し、それより深い階層では改行しない。<br><br>
 
+`packType`のみを設定した場合、`maxIndent:-1` が自動的に設定される。
 
 ----
 
@@ -106,7 +107,7 @@ console.log(someObject)
 ```
 ```JSON
 "文字数上限まで並べて改行 + { } で改行しない"
-"：stringify(obj, {maxLength:60, maxIndent: 2, packType: 'strict'})"
+"stringify(obj, {maxLength:60, maxIndent: 2, packType: 'strict'})"
 
 {
   "bool": true,
@@ -121,7 +122,7 @@ console.log(someObject)
 }
 ```
 ```JSON
-"文字数上限まで並べて改行 + { } で改行する (`inner_strict`も同様)"
+"文字数上限まで並べて改行 + { } で改行する"
 "stringify(obj, {maxLength:60, maxIndent: 2, packType: 'not_strict'})"
 
 {
@@ -195,7 +196,7 @@ console.log(someObject)
 ```
 ----
 `maxIndent` が負の値の場合。
-この例ではデフォルトが第3階層まで展開するので、`{maxIndent:-1}` は `{maxIndent:2}` と同じ。
+この例ではデフォルトが第3階層までの展開なので、`{maxIndent:-1}` は `{maxIndent:2}` と同じ。
 ```JSON
 "展開しない"
 "stringify(obj, {maxLength:60, maxIndent: -1})"
