@@ -21,11 +21,10 @@ forked from [lydell / json-stringify-pretty-compact](https://github.com/lydell/j
 function stringify(
   input: any,
   option?: {
-    space?: string|number,  maxLength?: number,
-    maxIndent?: number,     packType?: "strict" | "not_strict"
-  } | {
-    space?: string|number,  maxLength?: number,
-    packAt?: number,        packType?: "strict" | "inner_strict"
+    space?: string|number,
+    maxLength?: number,
+    maxIndent?: number,
+    packType?: "strict" | "not_strict" | "inner_strict"
   }
 )
 ```
@@ -49,8 +48,8 @@ console.log(someObject)
 ```JSON
 {
   "bool": true,
-  "short array": [1, 2, 3],
-  "long array": [
+  "short": [1, 2, 3],
+  "long": [
     {"x": 1, "y": 2},
     {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000, "c": 1000, "d": 1000},
     {"x": 1, "y": 1},
@@ -60,8 +59,8 @@ console.log(someObject)
              "↓"
 {
   "bool": true,
-  "short array": [1, 2, 3],
-  "long array": [
+  "short": [1, 2, 3],
+  "long": [
     {"x": 1, "y": 2},
     {
       "x": 2,
@@ -77,22 +76,21 @@ console.log(someObject)
   ]
 }
 ```
-`maxIndent` と `withPack`, あるいは `packAt` と `strict` の設定することでこの挙動を調整し、文字数上限 (maxLength) まで1行に要素を並べることができる。
+`maxIndent` と `withPack` の設定によってこの挙動を調整し、文字数上限 (maxLength) まで1行に要素を並べることができる。
 
-- **maxIndent**：正の数で指定。指定した数およびそれより深い階層ではオブジェクトや配列の展開形式を変更する。
+- **maxIndent**：指定した数およびそれより深い階層において、オブジェクトや配列の展開形式を変更する。マイナスの数を渡すと最も深い階層から逆算する。
 - **packType**：変更後のオブジェクトや配列の展開形式。デフォルト `false`
   - `false`：常に1行に展開し、文字数上限は無視する。
   - `strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行しない。
-  - `not_strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行してインデントを挿入する。<br><br>
-- **packAt**：負の数で指定。最も深い階層から指定した数だけ逆算し、その階層およびそれより深い階層ではオブジェクトや配列を文字数上限を基準にして展開する。
-- **packType**：変更後のオブジェクトや配列の展開形式。デフォルト `not_strict`
   - `not_strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行してインデントを挿入する。
-  - `strict`：文字数上限を基準に複数行に展開する。`{ }`や`[ ]` の前後で改行しない。
-  - `inner_strict`：文字数上限を基準に複数行に展開する。指定した階層では`not_strict`、それより深い階層では`strict`を適用する。
+  - `inner_strict`：文字数上限を基準に複数行に展開する。指定した階層では`not_strict`、それより深い階層では`strict`を適用する。<br><br>
+
 
 ----
 
+第3階層以降の展開形式を変更するパターン
 ```JSON
+"展開しない"
 "stringify(obj, {maxLength:60, maxIndent: 2})"
 
 {
@@ -107,7 +105,8 @@ console.log(someObject)
 }
 ```
 ```JSON
-"stringify(obj, {maxLength:60, maxIndent: 2, packType: 'strict'})"
+"文字数上限まで並べて改行 + { } で改行しない"
+"：stringify(obj, {maxLength:60, maxIndent: 2, packType: 'strict'})"
 
 {
   "bool": true,
@@ -122,6 +121,7 @@ console.log(someObject)
 }
 ```
 ```JSON
+"文字数上限まで並べて改行 + { } で改行する (`inner_strict`も同様)"
 "stringify(obj, {maxLength:60, maxIndent: 2, packType: 'not_strict'})"
 
 {
@@ -138,40 +138,33 @@ console.log(someObject)
   ]
 }
 ```
+第2階層以降の展開形式を変更するパターン
 ```JSON
-"stringify(obj, {maxLength:60, packAt: -1})"
+"展開しない"
+"stringify(obj, {maxLength:60, maxIndent: 1})"
 
 {
   "bool": true,
   "short array": [1, 2, 3],
-  "long array": [
-    {"x": 1, "y": 2},
-    {
-      "x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
-      "c": 1000, "d": 1000
-    },
-    {"x": 1, "y": 1},
-    {"x": 2, "y": 2}
-  ]
+  "long array": [{"x": 1, "y": 2}, {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000, "c": 1000, "d": 1000}, {"x": 1, "y": 1}, {"x": 2, "y": 2}]
 }
 ```
 ```JSON
-"stringify(obj, {maxLength:60, packAt: -1, packType: 'strict'})"
+"文字数上限まで並べて改行 + [ ] や { } で改行しない"
+"stringify(obj, {maxLength:60, maxIndent: 1, packType: 'strict'})"
 
 {
   "bool": true,
   "short array": [1, 2, 3],
-  "long array": [
-    {"x": 1, "y": 2},
-    {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
-     "c": 1000, "d": 1000},
-    {"x": 1, "y": 1},
-    {"x": 2, "y": 2}
-  ]
+  "long array": [{"x": 1, "y": 2},
+   {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
+    "c": 1000, "d": 1000},
+   {"x": 1, "y": 1}, {"x": 2, "y": 2}]
 }
 ```
 ```JSON
-"stringify(obj, {maxLength:60, packAt: -2})"
+"文字数上限まで並べて改行 + [ ] や { } で改行する"
+"stringify(obj, {maxIndent: 1, packType: 'not_strict'})"
 {
   "bool": true,
   "short array": [1, 2, 3],
@@ -186,7 +179,86 @@ console.log(someObject)
 }
 ```
 ```JSON
-"stringify(obj, {packAt: -2, packType: 'strict'})"
+"文字数上限まで並べて改行 + 最初の階層のみ [ ] や { } で改行する"
+"stringify(obj, {maxIndent: 1, packType: 'inner_strict'})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
+     "c": 1000, "d": 1000},
+    {"x": 1, "y": 1}, {"x": 2, "y": 2}
+  ]
+}
+```
+----
+`maxIndent` が負の値の場合。
+この例ではデフォルトが第3階層まで展開するので、`{maxIndent:-1}` は `{maxIndent:2}` と同じ。
+```JSON
+"展開しない"
+"stringify(obj, {maxLength:60, maxIndent: -1})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000, "c": 1000, "d": 1000},
+    {"x": 1, "y": 1},
+    {"x": 2, "y": 2}
+  ]
+}
+```
+```JSON
+"文字数上限まで並べて改行 + [ ] や { } で改行しない"
+"stringify(obj, {maxLength:60, maxIndent: -1, packType: 'strict'})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
+     "c": 1000, "d": 1000},
+    {"x": 1, "y": 1},
+    {"x": 2, "y": 2}
+  ]
+}
+```
+```JSON
+"文字数上限まで並べて改行 + [ ] や { } で改行する"
+"stringify(obj, {maxIndent: -1, packType: 'not_strict'})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {
+      "x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
+      "c": 1000, "d": 1000
+    },
+    {"x": 1, "y": 1},
+    {"x": 2, "y": 2}
+  ]
+}
+```
+この例では、`{maxIndent:-2}` は `{maxIndent:1}` と同じ
+```JSON
+"展開しない"
+"stringify(obj, {maxLength:60, maxIndent: -2})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [{"x": 1, "y": 2}, {"x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000, "c": 1000, "d": 1000}, {"x": 1, "y": 1}, {"x": 2, "y": 2}]
+}
+```
+```JSON
+"文字数上限まで並べて改行 + [ ] や { } で改行しない"
+"stringify(obj, {maxLength:60, maxIndent: -2, packType: 'strict'})"
 
 {
   "bool": true,
@@ -198,7 +270,25 @@ console.log(someObject)
 }
 ```
 ```JSON
-"stringify(obj, {packAt: -2, packType: 'inner_strict'})"
+"文字数上限まで並べて改行 + [ ] や { } で改行する"
+"stringify(obj, {maxIndent: -2, packType: 'not_strict'})"
+
+{
+  "bool": true,
+  "short array": [1, 2, 3],
+  "long array": [
+    {"x": 1, "y": 2},
+    {
+      "x": 2, "y": 1, "z": 1000000, "a": 1000, "b": 1000,
+      "c": 1000, "d": 1000
+    },
+    {"x": 1, "y": 1}, {"x": 2, "y": 2}
+  ]
+}
+```
+```JSON
+"文字数上限まで並べて改行 + 最初の階層のみ [ ] や { } で改行する"
+"stringify(obj, {maxIndent: -2, packType: 'inner_strict'})"
 
 {
   "bool": true,
