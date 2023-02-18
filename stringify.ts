@@ -33,14 +33,14 @@ export function stringify(
     const prettified = string.replace(stringOrChar, str_replcer)  // JSON.stringify() & replace
     const lengthLimit = maxlength - currentIndent.length - reserved // 上限までの残りの文字数
 
-    if (string === undefined) {                           // 不適切な入力の場合
-      return string                                       // undefined
+    if (string === undefined) {                           // 不適切な入力の場合: undefined
+      return string
     }
-    else if (!strict && indentCount >= indentLimit){      // インデント上限に達している場合
-      return prettified                                   // JSON.stringify() & replace
+    else if (!strict && indentCount >= indentLimit){      // インデント上限の場合: JSON.stringify() & replace
+      return prettified
     }
-    else if (prettified.length <= lengthLimit) {          // 文字数が上限以下の場合
-      return prettified                                   // JSON.stringify() & replace
+    else if (prettified.length <= lengthLimit) {          // 文字数が上限以下の場合: JSON.stringify() & replace
+      return prettified
     } // なので、インデントなしの結果が文字数上限を越えないなら space の設定は無視される
 
 
