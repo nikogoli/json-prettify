@@ -37,16 +37,17 @@ export function stringify(
     reserved: number,
     indentCount: number,
   ): ((depth:number) => string) | undefined {
-    // 再帰なし
-    const string = JSON.stringify(obj)
-    const prettified = string.replace(stringOrChar, str_replcer)  // JSON.stringify() & replace
-    const lengthLimit = maxlength - currentIndent.length - reserved // 上限までの残りの文字数
 
-    if (string === undefined) { return string as undefined }   // 不適切な入力: undefined
-    else if (indentCount >= opt.maxIndent && !opt.packType){   // インデント上限: JSON.stringify() & replace
+    // 再帰なし
+    const stringified = JSON.stringify(obj)
+    const prettified = stringified.replace(stringOrChar, str_replcer)
+    const lengthLimit = maxlength - currentIndent.length - reserved  // 上限までの残りの文字数
+
+    if (stringified === undefined) { return stringified as undefined }
+    else if (indentCount >= opt.maxIndent && !opt.packType){
       return (_depth:number) => prettified
     }
-    else if (prettified.length <= lengthLimit) {               // 文字数上限以下: JSON.stringify() & replace
+    else if (prettified.length <= lengthLimit) {
       return (_depth:number) => prettified
     }
     // なので、JSON.stringify() の結果が文字数上限を越えないなら space の設定は無視される
@@ -86,20 +87,19 @@ export function stringify(
           if (depth <= indentCount && opt.packType){
             if (opt.packType == "not_strict"){
               const initial = (depth < indentCount) ? "" : " "
-              const flexed_items = indent + flex(items, lengthLimit, depth, initial).map(t => t.trimStart()).join(`\n${nextIndent}`)
-              return [start, flexed_items, end].join(`\n${currentIndent}`)
+              const packed_items = indent + pack(items, lengthLimit, depth, initial).map(t => t.trimStart()).join(`\n${nextIndent}`)
+              return [start, packed_items, end].join(`\n${currentIndent}`)
             }
             else if (opt.packType == "inner_strict" && depth == indentCount){
-              const initial = (depth < indentCount) ? "" : " "
-              const flexed_items = indent + flex(items, lengthLimit, depth, initial).map(t => t.trimStart()).join(`\n${nextIndent}`)
-              return [start, flexed_items, end].join(`\n${currentIndent}`)
+              const packed_items = indent + pack(items, lengthLimit, depth, " ").map(t => t.trimStart()).join(`\n${nextIndent}`)
+              return [start, packed_items, end].join(`\n${currentIndent}`)
             }
             else {
               const initial = (opt.packType == "inner_strict")
                 ? (depth < indentCount-1) ? "" : " "
                 : (depth < indentCount) ? "" : " "
-              const flexed_items = flex(items, lengthLimit, depth, initial).join(`\n${currentIndent}`)
-              return start + flexed_items + end
+              const packed_items = pack(items, lengthLimit, depth, initial).join(`\n${currentIndent}`)
+              return start + packed_items + end
             }
           }
           else {
@@ -111,7 +111,7 @@ export function stringify(
       }
     }
 
-    return (_depth:number) => string
+    return (_depth:number) => stringified
   }
 
   const applied = _stringify(input, "", 0, 0)
@@ -124,10 +124,7 @@ export function stringify(
     return applied(packing_depth)
   }
   else if (opt.maxIndent !== Infinity && opt.packType){ // maxIndent & packType の設定がある場合
-    const packing_depth = (opt.packType == "strict")
-      ? opt.maxIndent
-      : opt.maxIndent
-    return applied(packing_depth)
+    return applied(opt.maxIndent)
   }
   else {
     return not_pack
@@ -145,7 +142,7 @@ export function get_max_indent(str:string): string{
 }
 
 
-export function flex(
+export function pack(
   items: Array<(depth:number) => string>,
   lengthLimit: number,
   depth: number,
