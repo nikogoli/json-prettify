@@ -11,12 +11,13 @@ export function stringify(
   option?: {
     space?: string|number,
     maxLength?: number,
-    packAt?: number,
+    maxIndent?: number,
+    packType?: "strict" | "not_strict"
   } | {
     space?: string|number,
     maxLength?: number,
-    maxIndent?: number,
-    withPack?: true
+    packAt?: number,
+    packType?: "strict" | "inner_strict"
   }
 ) {
   const { space, maxLength, ...others } = option ? option : { space:undefined, maxLength:undefined }
@@ -25,7 +26,10 @@ export function stringify(
       : "  "
 
   const maxlength = maxLength ? maxLength : 100
-  const opt = { maxIndent: Infinity, withPack: false, packAt: Infinity, ...others }
+  const opt = { maxIndent: Infinity, packType: false as const, packAt: Infinity, ...others }
+  if (opt.packAt !== Infinity && opt.packType === false){
+    opt.packType = "not_strict"
+  }
 
   function _stringify(
     obj: Record<string, any>,
@@ -39,7 +43,7 @@ export function stringify(
     const lengthLimit = maxlength - currentIndent.length - reserved // 上限までの残りの文字数
 
     if (string === undefined) { return string as undefined }   // 不適切な入力: undefined
-    else if (indentCount >= opt.maxIndent && !opt.withPack){   // インデント上限: JSON.stringify() & replace
+    else if (indentCount >= opt.maxIndent && !opt.packType){   // インデント上限: JSON.stringify() & replace
       return (_depth:number) => prettified
     }
     else if (prettified.length <= lengthLimit) {               // 文字数上限以下: JSON.stringify() & replace
@@ -79,10 +83,24 @@ export function stringify(
 
       if (items.length > 0) {
         const indented = (depth:number) => {
-          if (depth <= indentCount){
-            const flexed_items = flex(items, lengthLimit, depth, indentCount).join(`\n${currentIndent}`)
-            //console.log({indentCount, depth, text:start + flexed_items + end})
-            return start + flexed_items + end
+          if (depth <= indentCount && opt.packType){
+            if (opt.packType == "not_strict"){
+              const initial = (depth < indentCount) ? "" : " "
+              const flexed_items = indent + flex(items, lengthLimit, depth, initial).map(t => t.trimStart()).join(`\n${nextIndent}`)
+              return [start, flexed_items, end].join(`\n${currentIndent}`)
+            }
+            else if (opt.packType == "inner_strict" && depth == indentCount){
+              const initial = (depth < indentCount) ? "" : " "
+              const flexed_items = indent + flex(items, lengthLimit, depth, initial).map(t => t.trimStart()).join(`\n${nextIndent}`)
+              return [start, flexed_items, end].join(`\n${currentIndent}`)
+            }
+            else {
+              const initial = (opt.packType == "inner_strict")
+                ? (depth < indentCount-1) ? "" : " "
+                : (depth < indentCount) ? "" : " "
+              const flexed_items = flex(items, lengthLimit, depth, initial).join(`\n${currentIndent}`)
+              return start + flexed_items + end
+            }
           }
           else {
             const indented_items = indent + items.map(f => f(depth)).join(`,\n${nextIndent}`)
@@ -105,8 +123,10 @@ export function stringify(
     const packing_depth = opt.packAt <= 0 ? max_depth + opt.packAt : max_depth - 1
     return applied(packing_depth)
   }
-  else if (opt.maxIndent !== Infinity && opt.withPack){ // maxIndent & withPack の設定がある場合
-    const packing_depth = opt.maxIndent
+  else if (opt.maxIndent !== Infinity && opt.packType){ // maxIndent & packType の設定がある場合
+    const packing_depth = (opt.packType == "strict")
+      ? opt.maxIndent
+      : opt.maxIndent
     return applied(packing_depth)
   }
   else {
@@ -129,9 +149,8 @@ export function flex(
   items: Array<(depth:number) => string>,
   lengthLimit: number,
   depth: number,
-  indentCount: number
+  initial: string
 ): Array<string> {
-  const first_blank = (depth < indentCount) ? "" : " "
   const densed: Array<string> = []
   const last = items.reduce( (pre, item) => {
     const added = pre + item(depth) + ", "
@@ -139,7 +158,7 @@ export function flex(
       return added
     } else {
       densed.push(pre.trimEnd())
-      return first_blank + item(depth) + ", "
+      return initial + item(depth) + ", "
     }
   } , "")
   return [...densed, (last.endsWith(", ")) ? last.slice(0,-2) : last]
