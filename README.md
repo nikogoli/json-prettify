@@ -18,7 +18,10 @@ forked from [lydell/json-stringify-pretty-compact](https://github.com/lydell/jso
 
 ## Usage
 ```ts
-function stringify(input: any, space?: string|number, maxLength?: number)
+function stringify(
+  input: any,
+  option?: { space?: string | number, maxLength?: number }
+)
 ```
 - space: インデントの設定。JSON.stringify() の引数 space と同じ。
 - maxLength: 1行の文字数の上限。これを超える行では改行する。デフォルト 100。
