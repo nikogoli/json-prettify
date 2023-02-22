@@ -26,7 +26,7 @@ export function stringify(
     currentIndent:string,
     reserved: number,
     indentCount: number,
-  ): ((depth:number) => string) | undefined {
+  ): ((depth:number) => string) | string | undefined {
 
     // 再帰なし
     const stringified = JSON.stringify(obj)
@@ -36,7 +36,7 @@ export function stringify(
     if (stringified === undefined) { return stringified as undefined }
 
     if (prettified.length <= lengthLimit) {
-      return (_depth:number) => prettified
+      return prettified
     }
     // なので、JSON.stringify() の結果が文字数上限を越えないなら space の設定は無視される
 
@@ -44,7 +44,7 @@ export function stringify(
     // 再帰あり
     if (typeof obj === "object" && obj !== null) {
       const nextIndent = currentIndent + indent
-      const items:Array<(depth:number) => string> = []
+      const items:Array<((depth:number) => string) | string> = []
       let start: string
       let end: string
 
@@ -54,7 +54,7 @@ export function stringify(
         const last_idx = obj.length - 1
         obj.forEach((_x,index) => {
           const val = _stringify(obj[index], nextIndent, index === last_idx ? 0 : 1, indentCount+1)
-          items.push( val === undefined ? (_depth:number) => "null" : val)
+          items.push( val === undefined ? "null" : val)
         })
       } else {
         start = "{"
@@ -65,13 +65,23 @@ export function stringify(
           const newReseve = keyPart.length + (index === last_idx ? 0 : 1)
           const value = _stringify(val, nextIndent, newReseve, indentCount+1)
           if (value !== undefined) {
-            items.push( (depth:number) => keyPart + value(depth))
+            if (typeof value == "string"){
+              items.push(keyPart + value)
+            } else {
+              items.push( (depth:number) => keyPart + value(depth))
+            }
           }
         })
       }
 
       if (items.length > 0) {
         const indented = (depth:number) => {
+          //console.log({isStr: items.every(item => typeof item == "string"), items})
+          if (items.every(item => typeof item == "string")){
+            const packed_items = pack(items, lengthLimit, depth, " ").join(`\n${currentIndent}`)
+            return start + packed_items + end
+          }
+
           if (depth <= indentCount && !packType){
             return prettified
           }
@@ -94,7 +104,7 @@ export function stringify(
             }
           }
           else {
-            const indented_items = indent + items.map(f => f(depth)).join(`,\n${nextIndent}`)
+            const indented_items = indent + items.map(f => typeof f == "string" ? f : f(depth)).join(`,\n${nextIndent}`)
             return [start, indented_items, end].join(`\n${currentIndent}`)
           }
         }
@@ -106,7 +116,7 @@ export function stringify(
   }
 
   const applied = _stringify(input, "", 0, 0)
-  if (applied === undefined){ return applied }
+  if (applied === undefined || typeof applied == "string"){ return applied }
 
   const not_pack = applied(Infinity)
   if (option?.maxIndent === undefined){
@@ -140,20 +150,21 @@ export function get_max_indent(str:string): string{
 
 
 export function pack(
-  items: Array<(depth:number) => string>,
+  items: Array<((depth:number) => string)|string>,
   lengthLimit: number,
   depth: number,
   initial: string
 ): Array<string> {
   const densed: Array<string> = []
-  const last = items.reduce( (pre, item) => {
-    const added = pre + item(depth) + ", "
-    if (added.length <= lengthLimit -1){
-      return added
-    } else {
-      densed.push(pre.trimEnd())
-      return initial + item(depth) + ", "
-    }
-  } , "")
+  const last = items.map(v => typeof v == "string" ? v : v(depth))
+    .reduce( (pre, item) => {
+      const added = pre + item + ", "
+      if (added.length <= lengthLimit -1){
+        return added
+      } else {
+        densed.push(pre.trimEnd())
+        return initial + item + ", "
+      }
+    } , "")
   return [...densed, (last.endsWith(", ")) ? last.slice(0,-2) : last]
 }
