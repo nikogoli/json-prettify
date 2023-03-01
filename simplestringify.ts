@@ -49,15 +49,14 @@ export function stringify(
 
     // 再帰なし
     const stringified = JSON.stringify(obj)
+    if (stringified === undefined) { return stringified }
+
     const prettified = stringified.replace(stringOrChar, str_replcer)
     const lengthLimit = maxlength - currentIndent.length - reserved  // 上限までの残りの文字数
 
-    if (stringified === undefined) { return stringified as undefined }
-
     if (prettified.length <= lengthLimit) {
-      return prettified
+      return prettified // JSON.stringify() の結果が文字数上限を越えないなら space の設定は無視
     }
-    // なので、JSON.stringify() の結果が文字数上限を越えないなら space の設定は無視される
 
 
     // 再帰あり
@@ -127,7 +126,7 @@ export function stringify(
   }
 
   const applied = _stringify(input, "", 0, 0, false)
-  if (applied === undefined || typeof applied == "string"){ return applied }
+  if (applied === undefined || typeof applied == "string"){ return applied as string }
 
   return applied(Infinity)
 }
