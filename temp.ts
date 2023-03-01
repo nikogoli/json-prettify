@@ -69,4 +69,16 @@ const L = {
 		"events": [{ "time": 0.4333, "name": "Hit" }]
 }
 
-console.log(stringify(L, {maxLength:85}))
+const unexpectedNewLine = {
+  "SCRIPT": [
+    {"childs": null, "parent": "P", "fileName": "ドラブロ"},
+    {"childs": null, "parent": "DIV", "fileName": "ドラブロ"}
+  ],
+  "LABEL": [{"childs": null, "parent": "DIV", "fileName": "ドラブロ", "className": "toc_toggle"}],
+  "TEXTAREA": [
+    {"childs": null, "parent": "DIV", "fileName": "ドラブロ", "className": "crayon-plain print-no"}
+  ]
+}
+
+
+console.log(stringify(unexpectedNewLine))
