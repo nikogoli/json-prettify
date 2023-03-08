@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 class InnerItems {
   type:"array" | "obj";
   values:Array<((depth:number) => string) | string>;
@@ -72,7 +73,7 @@ export function stringify(
         end = "]"
         const last_idx = obj.length - 1
         obj.forEach((_x,index) => {
-          const newReseve = index === last_idx ? 0 : 1
+          const newReseve = (index === last_idx) ? 0 : 1
           const val = _stringify(obj[index], nextIndent, newReseve, indentCount+1, true)
           inner.values.push( val === undefined ? "null" : val)
         })
@@ -99,13 +100,13 @@ export function stringify(
 
       if (inner.values.length > 0) {
         const indented = (depth:number) => {
-          //console.log({isStr: items.every(item => typeof item == "string"), items})
           if (inner.values.every(item => typeof item == "string")){
-            const packed_items = pack(inner, lengthLimit, depth)
+            // 改行するので、pack で考慮する lengthLimit は現在のものではなく次の行のもの
+            const packed_items = pack(inner, maxlength-nextIndent.length, depth)
             if (is_ArrayElem){
               return start + packed_items.join(`\n${currentIndent}`+" ") + end
             } else {
-              return [start, indent + packed_items.join(`\n${nextIndent}`+""), end].join(`\n${currentIndent}`)
+              return [start, indent + packed_items.join(`\n${nextIndent}`), end].join(`\n${currentIndent}`)
             }
           }
 
@@ -152,7 +153,7 @@ export function pack(
   const last = items.map(v => typeof v == "string" ? v : v(depth))
     .reduce( (pre, item) => {
       const added = pre + item + ", "
-      if (added.length <= lengthLimit -1){
+      if (added.length <= lengthLimit){
         return added
       } else {
         densed.push(pre.trimEnd())
