@@ -1,1 +1,1 @@
-export { stringify } from "./stringify.ts"
+export { stringify } from "./simplestringify.ts"
